@@ -78,16 +78,15 @@ function cancelEdit(state) {
     editing: null,
   };
 }
+
 function renderFunction(state, setState) {
-  console.log("Rendering UI with todos:", state.todos);
   return new VNode('div', {}, [
-    ...state.todos.map(todo =>
-      new VNode('h1', { key: todo.id }, [todo.text])
-    )
+    new VNode('p', {}, [`Todo count: ${state.todos.length}`]),
+    new VNode('ul', {}, state.todos.map(todo =>
+      new VNode('li', { key: todo.id }, [todo.text])
+    )),
   ]);
 }
-
-
 
 //=================================//
 //           set events            //
