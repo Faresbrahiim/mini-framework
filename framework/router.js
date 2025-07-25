@@ -4,8 +4,8 @@ class Router {
     this.state = initialState;
     this.init();
   }
+
   init() {
-    console.log('routes', this.routes)
     window.addEventListener("hashchange", () => this.handleRouteChange());
     this.handleRouteChange();
   }
@@ -16,12 +16,12 @@ class Router {
 
   setState(newState) {
     this.state = { ...this.state, ...newState };
-    this.handleRouteChange();
+    this.handleRouteChange(); 
   }
-handleRouteChange() {
-  const currentPath = window.location.hash.slice(1) || '/';
-  const route = this.routes[currentPath];
 
+  handleRouteChange() {
+    const currentPath = window.location.hash.slice(1) || '/';
+    const route = this.routes[currentPath];
   if (route) {
     route(this.state, this.setState.bind(this));
   } else if (this.routes['/404']) {
@@ -31,7 +31,6 @@ handleRouteChange() {
       this.routes['/404'](this.state, this.setState.bind(this)); // prevent infinite loop
     }
   }
-}
-
+  }
 }
 
