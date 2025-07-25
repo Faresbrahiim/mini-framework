@@ -81,20 +81,20 @@ function cancelEdit(state) {
 
 function renderFunction(state, setState) {
   return new VNode('div', {}, [
-    new VNode('p', {}, [`Todo count: ${state.todos.length}`]),
-    new VNode('ul', {}, state.todos.map(todo =>
-      new VNode('li', { key: todo.id }, [todo.text])
+    new VNode('h1', {}, [`Todo count: ${state.todos.length}`]),
+    new VNode('h2', {}, state.todos.map(todo =>
+      new VNode('h3', { key: todo.id }, [todo.text]) 
     )),
   ]);
 }
 
+
 //=================================//
 //           set events            //
 //=================================//
+
 const appElement = document.getElementById('app');
 const vdomManager = new VDOMManager(appElement, renderFunction, initialState);
-
-const input = document.getElementById('new-todo');
 
 eventRegistry.register('keyup', 'new-todo', (e) => {
   if (e.key === 'Enter') {

@@ -5,12 +5,17 @@ class VDOMManager {
     this.renderFn = renderFn;
     this.state = initialState;
   }
+
   setState(newState) {
+    console.log("hellow from  setState function")
     if (typeof newState === 'function') {
       this.state = newState(this.state);
+      console.log("is it a func ?")
     } else {
+      console.log("does it enter the else condition ?")
       this.state = { ...this.state, ...newState };
     }
+    console.log("after the condtition")
     const newVNode = this.renderFn(this.state, this.setState.bind(this));
     updateElement(this.body, newVNode, this.oldVNode);
     this.oldVNode = newVNode;
@@ -33,13 +38,18 @@ function updateElement(parent, newVNode, oldVNode, index = 0) {
   if (!parent || parent.nodeType !== Node.ELEMENT_NODE) {
     return;
   }
+  console.log("1")
 
   const existingEl = parent.childNodes[index];
 
   function createDOMNode(vnode) {
     if (typeof vnode === 'string') {
+      console.log("2")
       return document.createTextNode(vnode);
+
     }
+    console.log("3")
+
     return vnode.render();
   }
 
