@@ -1,0 +1,45 @@
+1  issue on db click + issue one blue 
+
+what was the problem ?
+
+In original EventRegistry:
+document.onblur = (e) => self.dispatch("blur", e);
+Issue: blur (and also change) do not bubble up the DOM.
+dispatch method walks up the DOM from event.target to document.
+Because blur never reaches document, handler never fires.
+So the main problem was:
+Non-bubbling events cannot be attached to document 
+
+
+how i solve it 
+I created a new helper method:
+attachNonBubbling(type) {
+  const elements = document.querySelectorAll(`[data-on${type}]`);
+  elements.forEach(el => {
+    el.addEventListener(type, (e) => this.dispatch(type, e));
+  });
+}
+then in init 
+
+this.attachNonBubbling("change");
+this.attachNonBubbling("blur");
+
+🔹 What happens on a blur (non-bubbling event)
+You click away from an input (it loses focus).
+The event only triggers on that input.
+It does NOT bubble up to parent elements or document.
+
+| Event Type | Bubbling? | Where to attach    |
+| ---------- | --------- | ------------------ |
+| click      | ✅ yes     | parent or document |
+| dblclick   | ✅ yes     | parent or document |
+| keydown    | ✅ yes     | parent or document |
+| scroll     | ✅ yes     | parent or document |
+| input      | ✅ yes     | parent or document |
+| change     | ❌ no      | element itself     |
+| blur       | ❌ no      | element itself     |
+
+
+bubbles up to its parent (div) → then body → then html → finally document.
+Bubbling: the event spreads upward like water in a fountain.
+Non-bubbling: the event stays in the cup where it started — you have to catch it there.
