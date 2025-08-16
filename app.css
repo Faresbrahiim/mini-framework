@@ -3,7 +3,6 @@ body {
   margin: 0;
   padding: 0;
 }
-
 .not-found {
   font-family: sans-serif;
   display: flex;
@@ -181,6 +180,9 @@ body {
   position: relative;
   font-size: 24px;
   border-bottom: 1px solid #ededed;
+}
+.visually-hidden {
+  display:  none;
 }
 
 .todo-list li:last-child {
