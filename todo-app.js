@@ -7,6 +7,7 @@ const ESCAPE_KEY = 27;
 const eventRegistry = new EventRegistry();
 eventRegistry.init();
 
+
 function App(state, setState) {
   const { todos, filter, input, editingId, editText } = state;
 
@@ -28,17 +29,13 @@ function App(state, setState) {
   // --- New todo input handlers ---
   eventRegistry.register("keydown", inputKeyDownId, (e) => {
     if (e.keyCode === ENTER_KEY && input.trim()) {
-      const newTodo = {
-        id: Date.now(),
-        title: input.trim(),
-        completed: false,
-      };
+      const newTodo = { id: Date.now(), title: input.trim(), completed: false };
       setState({ todos: [...todos, newTodo], input: "" });
     }
   });
 
   eventRegistry.register("input", inputOnInputId, (e) => {
-    if (checkLen(e.target.value)) {
+    if (e.target.value.length >= 2) {
       setState({ input: e.target.value });
     }
   });
@@ -46,11 +43,7 @@ function App(state, setState) {
   eventRegistry.register("blur", inputOnInputId, (e) => {
     const value = e.target.value.trim();
     if (value.length > 0) {
-      const newTodo = {
-        id: Date.now(),
-        title: value,
-        completed: false,
-      };
+      const newTodo = { id: Date.now(), title: value, completed: false };
       setState({ todos: [...todos, newTodo], input: "" });
     } else {
       setState({ input: "" });
@@ -60,10 +53,7 @@ function App(state, setState) {
   // Toggle all todos
   eventRegistry.register("change", toggleAllId, (e) => {
     const shouldComplete = !allCompleted;
-    const newTodos = todos.map((todo) => ({
-      ...todo,
-      completed: shouldComplete,
-    }));
+    const newTodos = todos.map((todo) => ({ ...todo, completed: shouldComplete }));
     setState({ todos: newTodos });
   });
 
@@ -80,7 +70,7 @@ function App(state, setState) {
           value: input,
           "data-onkeydown": inputKeyDownId,
           "data-oninput": inputOnInputId,
-          "data-onblur": inputOnInputId, // blur for new todo
+          "data-onblur": inputOnInputId,
         }),
       ]),
 
@@ -109,8 +99,7 @@ function App(state, setState) {
                 // Delete todo
                 eventRegistry.register("click", destroyId, (e) => {
                   e.stopPropagation();
-                  const newTodos = todos.filter((t) => t.id !== todo.id);
-                  setState({ todos: newTodos });
+                  setState({ todos: todos.filter((t) => t.id !== todo.id) });
                 });
 
                 // Toggle todo
@@ -125,9 +114,15 @@ function App(state, setState) {
                 eventRegistry.register("dblclick", labelDoubleClickId, (e) => {
                   setState({ editingId: todo.id, editText: todo.title });
 
+                  // Focus input after DOM update
                   setTimeout(() => {
-                    const outsideClickId = "outside_click_" + todo.id + "_" + Date.now();
+                    const editInput = document.querySelector(".edit");
+                    if (editInput) {
+                      editInput.focus();
+                      editInput.setSelectionRange(editInput.value.length, editInput.value.length);
+                    }
 
+                    const outsideClickId = "outside_click_" + todo.id + "_" + Date.now();
                     const handleOutsideClick = (e) => {
                       const editInput = document.querySelector(".edit");
                       if (editInput && !editInput.contains(e.target)) {
@@ -144,17 +139,15 @@ function App(state, setState) {
                         delete eventRegistry.handlers.click[outsideClickId];
                       }
                     };
-
                     eventRegistry.register("click", outsideClickId, handleOutsideClick);
                   }, 0);
                 });
 
-                // Edit input
+                // Edit input handlers
                 eventRegistry.register("input", editInputId, (e) => {
                   setState({ editText: e.target.value });
                 });
 
-                // Blur handler for edit input
                 eventRegistry.register("blur", editInputId, (e) => {
                   const trimmedText = editText.trim();
                   if (trimmedText) {
@@ -173,7 +166,6 @@ function App(state, setState) {
                   });
                 });
 
-                // Keydown handler (Enter/Escape)
                 eventRegistry.register("keydown", editKeyDownId, (e) => {
                   if (e.keyCode === ENTER_KEY) {
                     const trimmedText = editText.trim();
@@ -227,8 +219,7 @@ function App(state, setState) {
                           value: editText,
                           "data-onkeydown": editKeyDownId,
                           "data-oninput": editInputId,
-                          "data-onblur": editInputId, // blur for edit
-                          autofocus: "true",
+                          "data-onblur": editInputId,
                         })
                       : null,
                   ].filter(Boolean)
@@ -279,7 +270,6 @@ function App(state, setState) {
     ].filter(Boolean)
   );
 }
-
 function checkLen(arg) {
   return arg.length >= 2;
 }
