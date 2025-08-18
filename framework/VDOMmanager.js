@@ -190,8 +190,11 @@ function updateAttributes(el, newAttrs = {}, oldAttrs = {}) {
     if (newVal === oldVal) continue;
 
     if (key.startsWith("on") && typeof newVal === "function") {
-      if (oldVal) el.removeEventListener(key.slice(2).toLowerCase(), oldVal);
-      el.addEventListener(key.slice(2).toLowerCase(), newVal);
+      // Assign directly instead of addEventListener
+      el[key.toLowerCase()] = (event) => {
+        if (key.toLowerCase() === "onsubmit") event.preventDefault();
+        newVal(event);
+      };
     } else if (key === "checked") {
       el.checked = Boolean(newVal);
     } else if (key === "value" && el.tagName === "INPUT") {
