@@ -57,24 +57,25 @@ function App(state, setState) {
 
   const allCompleted = todos.length > 0 && todos.every(t => t.completed);
 
-  return new VNode("section", { class: "todoapp" }, [
-    new VNode("header", { class: "header" }, [
+  return new VNode("section", { class: "todoapp", id: "root" }, [
+    new VNode("header", { class: "header" , "data-testid" : "header" }, [
       new VNode("h1", {}, ["todos"]),
-      new VNode("div", { class: "input-container" }, [
+      new VNode("div", { class: "input-container"  }, [
         new VNode("input", {
           class: "new-todo",
           type: "text",
           placeholder: "What needs to be done?",
-          autofocus: true,
+          "data-testid" : "text-input",
+          id : "todo-input",
           value: input,
           onkeydown: e => eventRegistry.dispatch("new_todo_keydown", e),
           oninput: e => eventRegistry.dispatch("new_todo_input", e),
-          onblur: e => eventRegistry.dispatch("new_todo_blur", e),
         }),
+        new VNode( "label" , {class : "visually-hidden" , for : "todo-input"}, ["New Todo Input"])
       ]),
     ]),
-
-    todos.length > 0 && new VNode("main", { class: "main" }, [
+    
+    new VNode("main", { class: "main" }, [
       new VNode("input", {
         id: "toggle-all",
         class: "toggle-all",
@@ -193,12 +194,12 @@ function App(state, setState) {
 }
 
 // Create app container and mount
-const appContainer = document.createElement("div");
-document.body.appendChild(appContainer);
 
-const app = new VDOMManager(appContainer, App, initialState);
+document.body.innerHTML = ""; // Clear everything
+
+const app = new VDOMManager(document.body, App, initialState);
 app.mount();
-
+document.querySelector("#todo-input").focus();
 // --- Router setup ---
 const routes = {
   "/": (state, setState) => app.setState({ ...app.state, filter: "all" }),
