@@ -19,7 +19,7 @@ const initialState = {
 // --- Global event handlers ---
 eventRegistry.subscribe("new_todo_keydown", e => {
   const value = e.target.value.trim();
-  if (e.keyCode === ENTER_KEY && value) {
+  if (e.keyCode === ENTER_KEY && checklen(value.length)) {
     app.setState({
       todos: [...app.state.todos, { id: Date.now(), title: value, completed: false }],
       input: ""
@@ -209,10 +209,12 @@ function App(state, setState) {
 
   ].filter(Boolean));
 }
-// --- Mount app ---
 document.body.innerHTML = ""; // Clear everything
 const app = new VDOMManager(document.body, App, initialState);
 app.mount();
+function checklen(input) {
+  return input > 1 ;
+}
 
 // --- Router setup ---
 const routes = {
