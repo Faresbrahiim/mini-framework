@@ -1,234 +1,12 @@
+import { EventRegistry } from "./framework/eventhandler.js";
 import { VDOMManager } from "./framework/VDOMmanager.js";
 import { Router } from "./framework/router.js";
 import { VNode } from "./framework/vdom.js";
+
 const ENTER_KEY = 13;
 const ESCAPE_KEY = 27;
-function App(state, setState) {
-  const { todos, filter, input, editingId, editText } = state;
+const eventRegistry = new EventRegistry();
 
-  const filtered = todos.filter((todo) => {
-    if (filter === "active") return !todo.completed;
-    if (filter === "completed") return todo.completed;
-    return true;
-  });
-
-  const activeTodoCount = todos.filter((t) => !t.completed).length;
-  const completedCount = todos.length - activeTodoCount;
-  const allCompleted = todos.length > 0 && activeTodoCount === 0;
-
-  return new VNode("section", { class: "todoapp", id: "root" }, [
-    // --- HEADER / INPUT ---
-    new VNode("header", { class: "header" }, [
-      new VNode("h1", {}, ["todos"]),
-      new VNode("div", { class: "input-container" }, [
-        new VNode("input", {
-          class: "new-todo",
-          type: "text",
-          placeholder: "What needs to be done?",
-          autofocus: true,
-          value: input,
-          onkeydown: (e) => {
-            if (e.key === "Enter" && input.trim()) {
-              const newTodo = {
-                id: Date.now(),
-                title: input.trim(),
-                completed: false,
-              };
-              setState({ todos: [...todos, newTodo], input: "" });
-            }
-          },
-          oninput: (e) => {
-            setState({ input: e.target.value });
-          },
-          onblur: (e) => {
-            const value = e.target.value.trim();
-            if (value) {
-              const newTodo = {
-                id: Date.now(),
-                title: value,
-                completed: false,
-              };
-              setState({ todos: [...todos, newTodo], input: "" });
-            } else {
-              setState({ input: "" });
-            }
-          },
-        }),
-      ]),
-    ]),
-
-    // --- MAIN ---
-    todos.length > 0
-      ? new VNode("main", { class: "main" }, [
-          new VNode("input", {
-            id: "toggle-all",
-            class: "toggle-all",
-            type: "checkbox",
-            checked: allCompleted,
-            onchange: () => {
-              const shouldComplete = !allCompleted;
-              setState({
-                todos: todos.map((t) => ({ ...t, completed: shouldComplete })),
-              });
-            },
-          }),
-          new VNode("label", { for: "toggle-all" }, ["Mark all as complete"]),
-          new VNode(
-            "ul",
-            { class: "todo-list" },
-            filtered.map((todo) => {
-              const isEditing = editingId === todo.id;
-
-              return new VNode(
-                "li",
-                {
-                  class: [
-                    todo.completed ? "completed" : "",
-                    isEditing ? "editing" : "",
-                  ]
-                    .filter(Boolean)
-                    .join(" "),
-                  key: todo.id,
-                },
-                [
-                  new VNode("div", { class: "view" }, [
-                    new VNode("input", {
-                      class: "toggle",
-                      type: "checkbox",
-                      checked: todo.completed,
-                      onchange: () => {
-                        setState({
-                          todos: todos.map((t) =>
-                            t.id === todo.id
-                              ? { ...t, completed: !t.completed }
-                              : t
-                          ),
-                        });
-                      },
-                    }),
-                    new VNode("label", {
-                      ondblclick: () => {
-                        setState({ editingId: todo.id, editText: todo.title });
-                        setTimeout(() => {
-                          const editInput = document.querySelector(".edit");
-                          if (editInput) {
-                            editInput.focus();
-                            editInput.setSelectionRange(
-                              editInput.value.length,
-                              editInput.value.length
-                            );
-                          }
-                        }, 0);
-                      },
-                    }, [todo.title]),
-                    new VNode("button", {
-                      class: "destroy",
-                      onclick: () => {
-                        setState({
-                          todos: todos.filter((t) => t.id !== todo.id),
-                        });
-                      },
-                    }),
-                  ]),
-                  isEditing
-                    ? new VNode("input", {
-                        class: "edit",
-                        value: editText,
-                        oninput: (e) => setState({ editText: e.target.value }),
-                        onblur: () => {
-                          const trimmed = editText.trim();
-                          if (trimmed) {
-                            setState({
-                              todos: todos.map((t) =>
-                                t.id === todo.id ? { ...t, title: trimmed } : t
-                              ),
-                              editingId: null,
-                              editText: "",
-                            });
-                          } else {
-                            setState({
-                              todos: todos.filter((t) => t.id !== todo.id),
-                              editingId: null,
-                              editText: "",
-                            });
-                          }
-                        },
-                        onkeydown: (e) => {
-                          if (e.key === "Enter") {
-                            const trimmed = editText.trim();
-                            if (trimmed) {
-                              setState({
-                                todos: todos.map((t) =>
-                                  t.id === todo.id
-                                    ? { ...t, title: trimmed }
-                                    : t
-                                ),
-                                editingId: null,
-                                editText: "",
-                              });
-                            } else {
-                              setState({
-                                todos: todos.filter((t) => t.id !== todo.id),
-                                editingId: null,
-                                editText: "",
-                              });
-                            }
-                          } else if (e.key === "Escape") {
-                            setState({ editingId: null, editText: "" });
-                          }
-                        },
-                      })
-                    : null,
-                ].filter(Boolean)
-              );
-            })
-          ),
-        ])
-      : null,
-
-    // --- FOOTER ---
-    todos.length > 0
-      ? new VNode("footer", { class: "footer" }, [
-          new VNode("span", { class: "todo-count" }, [
-            new VNode("strong", {}, [activeTodoCount.toString()]),
-            ` item${activeTodoCount !== 1 ? "s" : ""} left`,
-          ]),
-          new VNode("ul", { class: "filters" }, [
-            ...["all", "active", "completed"].map((f) =>
-              new VNode("li", {}, [
-                new VNode(
-                  "a",
-                  {
-                    class: filter === f ? "selected" : "",
-                    href: `#/${f === "all" ? "" : f}`,
-                  },
-                  [f[0].toUpperCase() + f.slice(1)]
-                ),
-              ])
-            ),
-          ]),
-          completedCount > 0
-            ? new VNode(
-                "button",
-                {
-                  class: "clear-completed",
-                  onclick: () => {
-                    setState({
-                      todos: todos.filter((t) => !t.completed),
-                    });
-                  },
-                },
-                ["Clear completed"]
-              )
-            : null,
-        ])
-      : null,
-  ]);
-}
-
-function checkLen(arg) {
-  return arg.length >= 2;
-}
 // Initial state
 const initialState = {
   todos: [],
@@ -238,48 +16,203 @@ const initialState = {
   editText: "",
 };
 
-// Create app container
+// --- Global event handlers ---
+eventRegistry.subscribe("new_todo_keydown", e => {
+  const value = e.target.value.trim();
+  if (e.keyCode === ENTER_KEY && value) {
+    app.setState({
+      todos: [...app.state.todos, { id: Date.now(), title: value, completed: false }],
+      input: ""
+    });
+  }
+});
 
-// Mount the app
+eventRegistry.subscribe("new_todo_input", e => app.setState({ input: e.target.value }));
+
+eventRegistry.subscribe("new_todo_blur", e => {
+  const value = e.target.value.trim();
+  if (value) {
+    app.setState({
+      todos: [...app.state.todos, { id: Date.now(), title: value, completed: false }],
+      input: ""
+    });
+  } else app.setState({ input: "" });
+});
+
+eventRegistry.subscribe("toggle_all", () => {
+  const allCompleted = app.state.todos.every(t => t.completed);
+  const newTodos = app.state.todos.map(t => ({ ...t, completed: !allCompleted }));
+  app.setState({ todos: newTodos });
+});
+
+// Per-todo actions (toggle, destroy, edit) handled dynamically in render
+function App(state, setState) {
+  const { todos, filter, input, editingId, editText } = state;
+
+  const filtered = todos.filter(todo => {
+    if (filter === "active") return !todo.completed;
+    if (filter === "completed") return todo.completed;
+    return true;
+  });
+
+  const allCompleted = todos.length > 0 && todos.every(t => t.completed);
+
+  return new VNode("section", { class: "todoapp" }, [
+    new VNode("header", { class: "header" }, [
+      new VNode("h1", {}, ["todos"]),
+      new VNode("div", { class: "input-container" }, [
+        new VNode("input", {
+          class: "new-todo",
+          type: "text",
+          placeholder: "What needs to be done?",
+          autofocus: true,
+          value: input,
+          onkeydown: e => eventRegistry.dispatch("new_todo_keydown", e),
+          oninput: e => eventRegistry.dispatch("new_todo_input", e),
+          onblur: e => eventRegistry.dispatch("new_todo_blur", e),
+        }),
+      ]),
+    ]),
+
+    todos.length > 0 && new VNode("main", { class: "main" }, [
+      new VNode("input", {
+        id: "toggle-all",
+        class: "toggle-all",
+        type: "checkbox",
+        checked: allCompleted,
+        onchange: e => eventRegistry.dispatch("toggle_all", e),
+      }),
+      new VNode("label", { for: "toggle-all" }, ["Mark all as complete"]),
+
+      new VNode("ul", { class: "todo-list" },
+        filtered.map(todo => {
+          const isEditing = editingId === todo.id;
+
+          const toggleEvent = "toggle_" + todo.id;
+          const destroyEvent = "destroy_" + todo.id;
+          const dblclickEvent = "dblclick_" + todo.id;
+          const editInputEvent = "edit_input_" + todo.id;
+          const editKeyDownEvent = "edit_keydown_" + todo.id;
+          const editBlurEvent = "edit_blur_" + todo.id;
+
+          // Subscribe once per todo on render
+          if (!eventRegistry.listeners.has(toggleEvent)) {
+            eventRegistry.subscribe(toggleEvent, () => {
+              app.setState({
+                todos: app.state.todos.map(t =>
+                  t.id === todo.id ? { ...t, completed: !t.completed } : t
+                )
+              });
+            });
+
+            eventRegistry.subscribe(destroyEvent, () => {
+              app.setState({ todos: app.state.todos.filter(t => t.id !== todo.id) });
+            });
+
+            eventRegistry.subscribe(dblclickEvent, () => {
+              app.setState({ editingId: todo.id, editText: todo.title });
+              setTimeout(() => {
+                const inputEl = document.querySelector(".edit");
+                if (inputEl) {
+                  inputEl.focus();
+                  inputEl.setSelectionRange(inputEl.value.length, inputEl.value.length);
+                }
+              }, 0);
+            });
+
+            eventRegistry.subscribe(editInputEvent, e => {
+              app.setState({ editText: e.target.value });
+            });
+
+            eventRegistry.subscribe(editBlurEvent, () => {
+              const trimmed = app.state.editText.trim();
+              if (trimmed) {
+                app.setState({
+                  todos: app.state.todos.map(t =>
+                    t.id === todo.id ? { ...t, title: trimmed } : t
+                  ),
+                  editingId: null,
+                  editText: ""
+                });
+              } else {
+                app.setState({
+                  todos: app.state.todos.filter(t => t.id !== todo.id),
+                  editingId: null,
+                  editText: ""
+                });
+              }
+            });
+
+            eventRegistry.subscribe(editKeyDownEvent, e => {
+              if (e.keyCode === ENTER_KEY) eventRegistry.dispatch(editBlurEvent, e);
+              else if (e.keyCode === ESCAPE_KEY) app.setState({ editingId: null, editText: "" });
+            });
+          }
+
+          const liClass = [];
+          if (todo.completed) liClass.push("completed");
+          if (isEditing) liClass.push("editing");
+
+          return new VNode("li", { class: liClass.join(" "), key: todo.id }, [
+            new VNode("div", { class: "view" }, [
+              new VNode("input", {
+                class: "toggle",
+                type: "checkbox",
+                checked: todo.completed,
+                onchange: e => eventRegistry.dispatch(toggleEvent, e),
+              }),
+              new VNode("label", { ondblclick: e => eventRegistry.dispatch(dblclickEvent, e) }, [todo.title]),
+              new VNode("button", { class: "destroy", onclick: e => eventRegistry.dispatch(destroyEvent, e) }),
+            ]),
+            isEditing && new VNode("input", {
+              class: "edit",
+              value: editText,
+              oninput: e => eventRegistry.dispatch(editInputEvent, e),
+              onblur: e => eventRegistry.dispatch(editBlurEvent, e),
+              onkeydown: e => eventRegistry.dispatch(editKeyDownEvent, e),
+            })
+          ].filter(Boolean));
+        })
+      ),
+    ]),
+
+    todos.length > 0 && new VNode("footer", { class: "footer" }, [
+      new VNode("span", { class: "todo-count" }, [
+        new VNode("strong", {}, [todos.filter(t => !t.completed).length.toString()]),
+        ` item${todos.filter(t => !t.completed).length !== 1 ? "s" : ""} left`
+      ]),
+      new VNode("ul", { class: "filters" }, [
+        ...["all", "active", "completed"].map(f =>
+          new VNode("li", {}, [
+            new VNode("a", { class: filter === f ? "selected" : "", href: `#/${f === "all" ? "" : f}` }, [f[0].toUpperCase() + f.slice(1)])
+          ])
+        )
+      ])
+    ])
+  ].filter(Boolean));
+}
+
+// Create app container and mount
 const appContainer = document.createElement("div");
 document.body.appendChild(appContainer);
 
 const app = new VDOMManager(appContainer, App, initialState);
 app.mount();
-// Route handlers that update the filter
-const routes = {
-  "/": (state, setState) => {
-    setState({ filter: "all" });
-    app.setState({ ...app.state, filter: "all" });
-  },
-  "/active": (state, setState) => {
-    setState({ filter: "active" });
-    app.setState({ ...app.state, filter: "active" });
-  },
-  "/completed": (state, setState) => {
-    setState({ filter: "completed" });
-    app.setState({ ...app.state, filter: "completed" });
-  },
-  "/404": (state, setState) => {
-    setState({ filter: "404" });
-    document.body.innerHTML = `
 
-  <div class="not-found">
-    <h1>404</h1>
-    <p>Page Not Found</p>
-  </div>
-`;
+// --- Router setup ---
+const routes = {
+  "/": (state, setState) => app.setState({ ...app.state, filter: "all" }),
+  "/active": (state, setState) => app.setState({ ...app.state, filter: "active" }),
+  "/completed": (state, setState) => app.setState({ ...app.state, filter: "completed" }),
+  "/404": () => {
+    document.body.innerHTML = `<div class="not-found"><h1>404</h1><p>Page Not Found</p></div>`;
   },
 };
 
 const router = new Router(routes, initialState);
 
-// Override app's setState to also update router state when needed
 const originalSetState = app.setState;
-app.setState = (newState) => {
-  // Update router state if filter changed
-  if (newState.filter && newState.filter !== router.getState().filter) {
-    router.setState(newState);
-  }
+app.setState = newState => {
+  if (newState.filter && newState.filter !== router.getState().filter) router.setState(newState);
   originalSetState.call(app, newState);
 };

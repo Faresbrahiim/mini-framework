@@ -29,13 +29,9 @@ export class VNode {
     const el = document.createElement(this.tag);
 
     for (const [key, value] of Object.entries(this.attrs)) {
-      if (key.startsWith("on") && typeof value === "function") {
-        // Use direct property assignment instead of addEventListener
-        el[key.toLowerCase()] = (event) => {
-          if (key.toLowerCase() === "onsubmit") event.preventDefault();
-          value(event);
-        };
-      } else if (key === "value" && el.tagName === "INPUT") {
+       if (key.startsWith("on") && typeof value === "function") {
+        el[key] = value; // attach handler as DOM property
+      }else if (key === "value" && el.tagName === "INPUT") {
         el.value = value;
       } else if (key === "checked" && el.tagName === "INPUT") {
         el.checked = Boolean(value);

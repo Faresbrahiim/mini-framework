@@ -190,7 +190,6 @@ function updateAttributes(el, newAttrs = {}, oldAttrs = {}) {
     if (newVal === oldVal) continue;
 
     if (key.startsWith("on") && typeof newVal === "function") {
-      // Assign directly instead of addEventListener
       el[key.toLowerCase()] = (event) => {
         if (key.toLowerCase() === "onsubmit") event.preventDefault();
         newVal(event);
