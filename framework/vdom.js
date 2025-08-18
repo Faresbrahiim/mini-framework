@@ -30,7 +30,11 @@ export class VNode {
 
     for (const [key, value] of Object.entries(this.attrs)) {
       if (key.startsWith("on") && typeof value === "function") {
-        el.addEventListener(key.slice(2).toLowerCase(), value);
+        // Use direct property assignment instead of addEventListener
+        el[key.toLowerCase()] = (event) => {
+          if (key.toLowerCase() === "onsubmit") event.preventDefault();
+          value(event);
+        };
       } else if (key === "value" && el.tagName === "INPUT") {
         el.value = value;
       } else if (key === "checked" && el.tagName === "INPUT") {
