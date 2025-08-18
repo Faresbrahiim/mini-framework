@@ -56,6 +56,7 @@ function App(state, setState) {
   });
 
   const allCompleted = todos.length > 0 && todos.every(t => t.completed);
+  const completedCount = todos.filter(t => t.completed).length;
 
   return new VNode("section", { class: "todoapp", id: "root" }, [
     // Header
@@ -78,16 +79,17 @@ function App(state, setState) {
 
     // Main
     new VNode("main", { class: "main", "data-testid": "main" }, [
-      todos.length > 0 && new VNode("div", { class: "toggle-all-container" }, [new VNode("input", {
-        id: "toggle-all",
-        class: "toggle-all",
-        type: "checkbox",
-        "data-testid" : "toggle-all",
-        checked: allCompleted,
-        onchange: e => eventRegistry.dispatch("toggle_all", e),
-      }),
-      new VNode("label", { for: "toggle-all" , class : "toggle-all-label"}, ["Toggle All Input"]),].filter(Boolean)),
-
+      todos.length > 0 && new VNode("div", { class: "toggle-all-container" }, [
+        new VNode("input", {
+          id: "toggle-all",
+          class: "toggle-all",
+          type: "checkbox",
+          "data-testid": "toggle-all",
+          checked: allCompleted,
+          onchange: e => eventRegistry.dispatch("toggle_all", e),
+        }),
+        new VNode("label", { for: "toggle-all", class: "toggle-all-label" }, ["Toggle All Input"]),
+      ].filter(Boolean)),
 
       new VNode("ul", { class: "todo-list", "data-testid": "todo-list" },
         filtered.map(todo => {
@@ -156,17 +158,17 @@ function App(state, setState) {
           if (todo.completed) liClass.push("completed");
           if (isEditing) liClass.push("editing");
 
-          return new VNode("li", { class: liClass.join(" "), key: todo.id  , "data-testid" : "todo-item"}, [
+          return new VNode("li", { class: liClass.join(" "), key: todo.id, "data-testid": "todo-item" }, [
             new VNode("div", { class: "view" }, [
               new VNode("input", {
                 class: "toggle",
                 type: "checkbox",
                 checked: todo.completed,
-                "data-testid" : "todo-item-toggle",
+                "data-testid": "todo-item-toggle",
                 onchange: e => eventRegistry.dispatch(toggleEvent, e),
               }),
-              new VNode("label", { ondblclick: e => eventRegistry.dispatch(dblclickEvent, e) , "data-testid" : "todo-item-label"}, [todo.title]),
-              new VNode("button", { class: "destroy", onclick: e => eventRegistry.dispatch(destroyEvent, e)  , "data-testid" : "todo-item-button"}),
+              new VNode("label", { ondblclick: e => eventRegistry.dispatch(dblclickEvent, e), "data-testid": "todo-item-label" }, [todo.title]),
+              new VNode("button", { class: "destroy", onclick: e => eventRegistry.dispatch(destroyEvent, e), "data-testid": "todo-item-button" }),
             ]),
             isEditing && new VNode("input", {
               class: "edit",
@@ -181,27 +183,36 @@ function App(state, setState) {
     ].filter(Boolean)),
 
     // Footer
-    todos.length > 0 && new VNode("footer", { class: "footer" , "data-testid" : "footer" }, [
+    // Footer
+    todos.length > 0 && new VNode("footer", { class: "footer", "data-testid": "footer" }, [
       new VNode("span", { class: "todo-count" }, [
         new VNode("strong", {}, [todos.filter(t => !t.completed).length.toString()]),
         ` item${todos.filter(t => !t.completed).length !== 1 ? "s" : ""} left`
       ]),
-      new VNode("ul", { class: "filters" , "data-testid" : "footer-navigation" }, [
+      new VNode("ul", { class: "filters", "data-testid": "footer-navigation" }, [
         ...["all", "active", "completed"].map(f =>
           new VNode("li", {}, [
             new VNode("a", { class: filter === f ? "selected" : "", href: `#/${f === "all" ? "" : f}` }, [f[0].toUpperCase() + f.slice(1)])
           ])
         )
-      ])
-    ])
+      ]),
+      new VNode("button", {
+        class: "clear-completed",
+        disabled: todos.every(t => !t.completed),
+          onclick: () => {
+        setState({
+          todos: state.todos.filter(t => !t.completed)
+        });
+      }
+      }, ["Clear completed"])
+    ].filter(Boolean))
+
   ].filter(Boolean));
 }
-
 // --- Mount app ---
 document.body.innerHTML = ""; // Clear everything
 const app = new VDOMManager(document.body, App, initialState);
 app.mount();
-document.querySelector("#todo-input").focus();
 
 // --- Router setup ---
 const routes = {

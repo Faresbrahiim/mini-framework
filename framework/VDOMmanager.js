@@ -160,11 +160,6 @@ function reconcileKeyedChildren(parentEl, newChildren, oldChildren) {
   }
 }
 
-function createDOMNode(vnode) {
-  if (vnode === null || vnode === undefined) return document.createTextNode("");
-  if (typeof vnode === "string") return document.createTextNode(vnode);
-  return vnode.render();
-}
 
 function changed(node1, node2) {
   if (node1 == null || node2 == null) return node1 !== node2;
@@ -172,34 +167,48 @@ function changed(node1, node2) {
   if (typeof node1 === "string") return node1 !== node2;
   return node1.tag !== node2.tag || node1.attrs?.key !== node2.attrs?.key;
 }
-
 function updateAttributes(el, newAttrs = {}, oldAttrs = {}) {
+  // Remove old attrs
   for (const key in oldAttrs) {
     if (!(key in newAttrs)) {
-      if (key.startsWith("on") && typeof oldAttrs[key] === "function") {
-        el.removeEventListener(key.slice(2).toLowerCase(), oldAttrs[key]);
-      } else {
-        el.removeAttribute(key);
-      }
+      el.removeAttribute(key);
+      if (key in el) el[key] = "";
     }
   }
 
-  for (const key in newAttrs) {
-    const newVal = newAttrs[key];
-    const oldVal = oldAttrs[key];
-    if (newVal === oldVal) continue;
-
-    if (key.startsWith("on") && typeof newVal === "function") {
-      el[key.toLowerCase()] = (event) => {
-        if (key.toLowerCase() === "onsubmit") event.preventDefault();
-        newVal(event);
-      };
+  // Add / update new attrs
+  for (const [key, value] of Object.entries(newAttrs)) {
+    if (key.startsWith("on") && typeof value === "function") {
+      el[key] = value; // event handler
+    } else if (key === "disabled") {
+      el.disabled = Boolean(value);
+      if (!value) el.removeAttribute("disabled");
     } else if (key === "checked") {
-      el.checked = Boolean(newVal);
+      el.checked = Boolean(value);
+      if (!value) el.removeAttribute("checked");
     } else if (key === "value" && el.tagName === "INPUT") {
-      if (el.value !== newVal) el.value = newVal;
-    } else if (key !== "key") {
-      el.setAttribute(key, newVal);
+      el.value = value;
+      el.setAttribute("value", value);
+    } else {
+      el.setAttribute(key, value);
     }
   }
+}
+
+
+function createDOMNode(vnode) {
+  if (vnode == null) return document.createTextNode("");
+  if (typeof vnode === "string") return document.createTextNode(vnode);
+
+  const el = document.createElement(vnode.tag);
+
+  // ✅ Apply attributes immediately
+  updateAttributes(el, vnode.attrs, {});
+
+  // Render children
+  (vnode.children || []).forEach(child => {
+    el.appendChild(createDOMNode(child));
+  });
+
+  return el;
 }
