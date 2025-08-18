@@ -1,7 +1,15 @@
 export class EventRegistry {
     constructor(config = {}) {
         this.handlers = {};
-        this.supportedEvents = ["click", "keydown", "scroll", "dblclick", "input", "change", "blur"];
+        this.supportedEvents = [
+            "click",
+            "keydown",
+            "scroll",
+            "dblclick",
+            "input",
+            "change",
+            "blur"
+        ];
         for (const type of this.supportedEvents) {
             this.handlers[type] = {};
         }
@@ -68,32 +76,14 @@ export class EventRegistry {
     init() {
         const self = this;
 
-        // Bubbling events
-        document.addEventListener("click", (e) => self.handleClickWithDoubleClickDetection(e));
-        document.addEventListener("keydown", (e) => self.dispatch("keydown", e));
-        document.addEventListener("scroll", (e) => self.dispatch("scroll", e));
-        document.addEventListener("input", (e) => self.dispatch("input", e));
+        // Bubbling events (normal delegation)
+        document.onclick = (e) => self.handleClickWithDoubleClickDetection(e);
+        document.onkeydown = (e) => self.dispatch("keydown", e);
+        document.onscroll = (e) => self.dispatch("scroll", e);
+        document.oninput = (e) => self.dispatch("input", e);
 
-        // Non-bubbling events must be attached to elements
-        this.attachNonBubbling("change");
-        this.attachNonBubbling("blur");
-
-        // Optional: observe DOM for dynamically added elements
-        const observer = new MutationObserver(() => {
-            self.attachNonBubbling("change");
-            self.attachNonBubbling("blur");
-        });
-        observer.observe(document.body, { childList: true, subtree: true });
-    }
-
-    attachNonBubbling(type) {
-        const self = this;
-        const elements = document.querySelectorAll(`[data-on${type}]`);
-        elements.forEach(el => {
-            if (!el.__eventRegistryAttached) {
-                el.addEventListener(type, (e) => self.dispatch(type, e));
-                el.__eventRegistryAttached = true; // mark as attached
-            }
-        });
+        // Non-bubbling events handled via CAPTURING
+        document.addEventListener("change", (e) => self.dispatch("change", e), true);
+        document.addEventListener("blur", (e) => self.dispatch("blur", e), true);
     }
 }
