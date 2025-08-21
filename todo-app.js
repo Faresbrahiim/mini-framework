@@ -2,7 +2,6 @@ import { EventRegistry } from "./framework/eventhandler.js";
 import { VDOMManager } from "./framework/VDOMmanager.js";
 import { Router } from "./framework/router.js";
 import { VNode } from "./framework/vdom.js";
-
 const ENTER_KEY = 13;
 const ESCAPE_KEY = 27;
 const eventRegistry = new EventRegistry();
@@ -13,10 +12,6 @@ const initialState = {
   editingId: null,
   editText: "",
 };
-
-// --------------------
-// Helper Functions
-// --------------------
 const addTodo = value => {
   const trimmed = value.trim();
   if (!trimmed || trimmed.length <= 1) return;
@@ -25,39 +20,28 @@ const addTodo = value => {
     input: ""
   });
 };
-
 const updateTodo = (id, updater) => {
   app.setState({
     todos: app.state.todos.map(t => (t.id === id ? updater(t) : t))
   });
 };
-
-// --------------------
-// Event Subscriptions
-// --------------------
 eventRegistry.subscribe("new_todo_keydown", e => {
   if (e.keyCode === ENTER_KEY) addTodo(e.target.value);
 });
-
 eventRegistry.subscribe("new_todo_input", e => app.setState({ input: e.target.value }));
-
 eventRegistry.subscribe("new_todo_blur", e => addTodo(e.target.value));
-
 eventRegistry.subscribe("toggle_all", () => {
   const allCompleted = app.state.todos.every(t => t.completed);
   app.setState({ todos: app.state.todos.map(t => ({ ...t, completed: !allCompleted })) });
 });
-
 eventRegistry.subscribe("todo_toggle", e => {
   const id = Number(e.target.dataset.id);
   updateTodo(id, t => ({ ...t, completed: !t.completed }));
 });
-
 eventRegistry.subscribe("todo_destroy", e => {
   const id = Number(e.target.dataset.id);
   app.setState({ todos: app.state.todos.filter(t => t.id !== id) });
 });
-
 eventRegistry.subscribe("todo_dblclick", e => {
   const id = Number(e.target.dataset.id);
   app.setState({ editingId: id, editText: e.target.textContent });
@@ -69,18 +53,11 @@ eventRegistry.subscribe("todo_dblclick", e => {
     }
   }, 0);
 });
-
 eventRegistry.subscribe("todo_edit_input", e => app.setState({ editText: e.target.value }));
-
-// --------------------
-// New edit rules
-// --------------------
 eventRegistry.subscribe("todo_edit_blur", e => {
   const id = Number(e.target.dataset.id);
   const todo = app.state.todos.find(t => t.id === id);
   if (!todo) return;
-
-  // On blur, cancel edit and restore original title
   app.setState({ editingId: null, editText: todo.title });
 });
 
@@ -92,29 +69,21 @@ eventRegistry.subscribe("todo_edit_keydown", e => {
   if (e.keyCode === ENTER_KEY) {
     const trimmed = e.target.value.trim();
     if (trimmed.length > 2) {
-      // Only update if more than 2 letters
       updateTodo(id, t => ({ ...t, title: trimmed }));
       app.setState({ editingId: null, editText: "" }); // finish editing
     }
-    // Otherwise, do nothing (keep editing)
   } else if (e.keyCode === ESCAPE_KEY) {
     app.setState({ editingId: null, editText: todo.title }); // cancel edit
   }
 });
 
-
-// --------------------
-// VDOM App Component
-// --------------------
 function App(state, setState) {
   const { todos, filter, input, editingId, editText } = state;
   const filtered = todos.filter(todo => ({ all: true, active: !todo.completed, completed: todo.completed }[filter]));
   const allCompleted = todos.length > 0 && todos.every(t => t.completed);
   const remaining = todos.filter(t => !t.completed).length;
-
   const createTodoItem = todo => {
     const isEditing = editingId === todo.id;
-
     return new VNode("li", {
       class: `${todo.completed ? "completed" : ""} ${isEditing ? "editing" : ""}`,
       key: todo.id
@@ -147,9 +116,7 @@ function App(state, setState) {
       })
     ].filter(Boolean));
   };
-
   return new VNode("section", { class: "todoapp", id: "root" }, [
-    // Header
     new VNode("header", { class: "header" }, [
       new VNode("h1", {}, ["todos"]),
       new VNode("div", { class: "input-container" }, [
@@ -166,7 +133,6 @@ function App(state, setState) {
       ])
     ]),
 
-    // Main
     new VNode("main", { class: "main" }, [
       todos.length > 0 && new VNode("div", { class: "toggle-all-container" }, [
         new VNode("input", {
@@ -178,11 +144,9 @@ function App(state, setState) {
         }),
         new VNode("label", { for: "toggle-all" }, ["Toggle All Input"])
       ].filter(Boolean)),
-
       new VNode("ul", { class: "todo-list" }, filtered.map(createTodoItem))
     ].filter(Boolean)),
 
-    // Footer
     todos.length > 0 && new VNode("footer", { class: "footer" }, [
       new VNode("span", { class: "todo-count" }, [
         new VNode("strong", {}, [remaining.toString()]),
@@ -206,22 +170,20 @@ function App(state, setState) {
     ].filter(Boolean))
   ].filter(Boolean));
 }
-
-// --------------------
-// Init app + Router
-// --------------------
 document.body.innerHTML = "";
 const app = new VDOMManager(document.body, App, initialState);
 app.mount();
-
+const notFound = new VNode("div", { class: "not-found" }, ["page not found 404"])
 const routes = {
   "/": () => app.setState({ ...app.state, filter: "all" }),
   "/active": () => app.setState({ ...app.state, filter: "active" }),
   "/completed": () => app.setState({ ...app.state, filter: "completed" }),
-  "/404": () => { document.body.innerHTML = `<div class="not-found"><h1>404</h1><p>Page Not Found</p></div>`; }
+  "/404": () => {
+    document.body.innerHTML = "";
+    document.body.appendChild(notFound.render());
+  }
 };
 const router = new Router(routes, initialState);
-
 const originalSetState = app.setState;
 app.setState = newState => {
   if (newState.filter && newState.filter !== router.getState().filter) router.setState(newState);
