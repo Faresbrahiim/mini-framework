@@ -12,6 +12,7 @@ const initialState = {
   editingId: null,
   editText: "",
 };
+
 const addTodo = value => {
   const trimmed = value.trim();
   if (!trimmed || trimmed.length <= 1) return;
@@ -20,6 +21,7 @@ const addTodo = value => {
     input: ""
   });
 };
+
 const updateTodo = (id, updater) => {
   app.setState({
     todos: app.state.todos.map(t => (t.id === id ? updater(t) : t))
@@ -31,8 +33,19 @@ eventRegistry.subscribe("new_todo_keydown", e => {
 eventRegistry.subscribe("new_todo_input", e => app.setState({ input: e.target.value }));
 eventRegistry.subscribe("new_todo_blur", e => addTodo(e.target.value));
 eventRegistry.subscribe("toggle_all", () => {
-  const allCompleted = app.state.todos.every(t => t.completed);
-  app.setState({ todos: app.state.todos.map(t => ({ ...t, completed: !allCompleted })) });
+  const { todos, filter } = app.state;
+  const visibleTodos = todos.filter(todo => {
+    if (filter === "active") return !todo.completed;
+    if (filter === "completed") return todo.completed;
+    return true;
+  });
+  if (visibleTodos.length === 0) return;
+  const allVisibleCompleted = visibleTodos.every(t => t.completed);
+  const newTodos = todos.map(t => {
+    if (visibleTodos.includes(t)) return { ...t, completed: !allVisibleCompleted };
+    return t;
+  });
+  app.setState({ todos: newTodos });
 });
 eventRegistry.subscribe("todo_toggle", e => {
   const id = Number(e.target.dataset.id);
@@ -55,32 +68,29 @@ eventRegistry.subscribe("todo_dblclick", e => {
 });
 eventRegistry.subscribe("todo_edit_input", e => app.setState({ editText: e.target.value }));
 eventRegistry.subscribe("todo_edit_blur", e => {
-  const id = Number(e.target.dataset.id);
-  const todo = app.state.todos.find(t => t.id === id);
-  if (!todo) return;
-  app.setState({ editingId: null, editText: todo.title });
+  app.setState({ editingId: null, editText: "" });
 });
-
 eventRegistry.subscribe("todo_edit_keydown", e => {
   const id = Number(e.target.dataset.id);
-  const todo = app.state.todos.find(t => t.id === id);
-  if (!todo) return;
-
   if (e.keyCode === ENTER_KEY) {
     const trimmed = e.target.value.trim();
     if (trimmed.length > 2) {
       updateTodo(id, t => ({ ...t, title: trimmed }));
-      app.setState({ editingId: null, editText: "" }); // finish editing
     }
+    app.setState({ editingId: null, editText: "" });
   } else if (e.keyCode === ESCAPE_KEY) {
-    app.setState({ editingId: null, editText: todo.title }); // cancel edit
+    const todo = app.state.todos.find(t => t.id === id);
+    app.setState({ editingId: null, editText: todo ? todo.title : "" });
   }
 });
-
 function App(state, setState) {
   const { todos, filter, input, editingId, editText } = state;
-  const filtered = todos.filter(todo => ({ all: true, active: !todo.completed, completed: todo.completed }[filter]));
-  const allCompleted = todos.length > 0 && todos.every(t => t.completed);
+  const filtered = todos.filter(todo => ({
+    all: true,
+    active: !todo.completed,
+    completed: todo.completed
+  }[filter]));
+  const allCompleted = filtered.length > 0 && filtered.every(t => t.completed);
   const remaining = todos.filter(t => !t.completed).length;
   const createTodoItem = todo => {
     const isEditing = editingId === todo.id;
@@ -132,9 +142,8 @@ function App(state, setState) {
         })
       ])
     ]),
-
     new VNode("main", { class: "main" }, [
-      todos.length > 0 && new VNode("div", { class: "toggle-all-container" }, [
+      filtered.length > 0 && new VNode("div", { class: "toggle-all-container" }, [
         new VNode("input", {
           id: "toggle-all",
           class: "toggle-all",
@@ -144,6 +153,7 @@ function App(state, setState) {
         }),
         new VNode("label", { for: "toggle-all" }, ["Toggle All Input"])
       ].filter(Boolean)),
+
       new VNode("ul", { class: "todo-list" }, filtered.map(createTodoItem))
     ].filter(Boolean)),
 
@@ -168,20 +178,18 @@ function App(state, setState) {
         onclick: () => setState({ todos: state.todos.filter(t => !t.completed) })
       }, ["Clear completed"])
     ].filter(Boolean))
+
   ].filter(Boolean));
 }
 document.body.innerHTML = "";
 const app = new VDOMManager(document.body, App, initialState);
 app.mount();
-const notFound = new VNode("div", { class: "not-found" }, ["page not found 404"])
+const notFound = new VNode("div", { class: "not-found" }, ["page not found 404"]);
 const routes = {
   "/": () => app.setState({ ...app.state, filter: "all" }),
   "/active": () => app.setState({ ...app.state, filter: "active" }),
   "/completed": () => app.setState({ ...app.state, filter: "completed" }),
-  "/404": () => {
-    document.body.innerHTML = "";
-    document.body.appendChild(notFound.render());
-  }
+  "/404": () => { document.body.innerHTML = notFound.render(); }
 };
 const router = new Router(routes, initialState);
 const originalSetState = app.setState;
