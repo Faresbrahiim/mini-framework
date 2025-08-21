@@ -151,9 +151,6 @@ function reconcileKeyedChildren(parentEl, newChildren, oldChildren) {
   }
 }
 
-// -------------------------
-// Helpers
-// -------------------------
 function changed(node1, node2) {
   if (node1 == null || node2 == null) return node1 !== node2;
   if (typeof node1 !== typeof node2) return true;
@@ -162,7 +159,6 @@ function changed(node1, node2) {
 }
 
 function updateAttributes(el, newAttrs = {}, oldAttrs = {}) {
-  // Remove old attributes
   for (const key in oldAttrs) {
     if (!(key in newAttrs)) {
       el.removeAttribute(key);
@@ -170,7 +166,6 @@ function updateAttributes(el, newAttrs = {}, oldAttrs = {}) {
     }
   }
 
-  // Add/update new attributes
   for (const [key, value] of Object.entries(newAttrs)) {
     if (key.startsWith("on") && typeof value === "function") {
       el[key] = value;
@@ -188,17 +183,14 @@ function updateAttributes(el, newAttrs = {}, oldAttrs = {}) {
     }
   }
 }
-
 function createDOMNode(vnode) {
   if (vnode == null) return document.createTextNode("");
   if (typeof vnode === "string") return document.createTextNode(vnode);
-
   const el = document.createElement(vnode.tag);
   updateAttributes(el, vnode.attrs, {});
 
   (vnode.children || []).forEach(child => {
     el.appendChild(createDOMNode(child));
   });
-
   return el;
 }
