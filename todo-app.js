@@ -22,6 +22,7 @@ const addTodo = value => {
   });
 };
 
+
 const updateTodo = (id, updater) => {
   app.setState({
     todos: app.state.todos.map(t => (t.id === id ? updater(t) : t))
