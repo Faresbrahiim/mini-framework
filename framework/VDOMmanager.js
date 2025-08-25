@@ -167,6 +167,7 @@ function reconcileKeyedChildren(parentEl, newChildren, oldChildren) {
   }
 }
 
+
 function changed(node1, node2) {
   //  null null -> return false nothing changed
   if (node1 == null || node2 == null) return node1 !== node2;
