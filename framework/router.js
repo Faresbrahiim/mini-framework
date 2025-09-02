@@ -18,7 +18,7 @@ export class Router {
     const currentPath = window.location.hash.slice(1) || '/';
     const route = this.routes[currentPath];
     if (route) {
-      route(this.state, this.setState.bind(this));  
+      route();  
     } else if (this.routes["/404"]) {
       window.location.hash = "#/404"; 
     }
