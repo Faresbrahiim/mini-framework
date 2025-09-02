@@ -192,9 +192,4 @@ const routes = {
   "/completed": () => app.setState({ ...app.state, filter: "completed" }),
   "/404": () => { document.body.innerHTML = notFound.render(); }
 };
-const router = new Router(routes, initialState);
-const originalSetState = app.setState;
-app.setState = newState => {
-  if (newState.filter && newState.filter !== router.getState().filter) router.setState(newState);
-  originalSetState.call(app, newState);
-};
+new Router(routes, initialState);

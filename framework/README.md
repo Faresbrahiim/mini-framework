@@ -7,7 +7,7 @@ Welcome to the documentation for your minimal virtual DOM framework. This docume
 
 ## ✨ Features
 
-- **Virtual DOM rendering** with diffing and keyed reconciliation
+- **Virtual DOM rendering** with diffing 
 - **Declarative element creation** using `VNode`
 - **Event handling** via attributes (e.g., `onClick`, `onInput`) or with an `EventRegistry`
 - **Component state management** with `VDOMManager`
