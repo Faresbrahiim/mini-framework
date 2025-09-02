@@ -1,5 +1,5 @@
 export class VDOMManager {
-  constructor(container, renderFn, initialState = {}) {
+      constructor(container, renderFn, initialState = {}) {
     this.container = container;
     this.renderFn = renderFn;
     this.state = initialState;

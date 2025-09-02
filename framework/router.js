@@ -8,12 +8,7 @@ export class Router {
     window.addEventListener("hashchange", () => this.handleRouteChange());
     this.handleRouteChange();
   }
-  getState() {
-    return this.state;
-  }
-  setState(newState) {
-    this.state = { ...this.state, ...newState };
-  }
+
   handleRouteChange() {
     const currentPath = window.location.hash.slice(1) || '/';
     const route = this.routes[currentPath];
