@@ -32,7 +32,7 @@ eventRegistry.subscribe("new_todo_keydown", e => {
   if (e.keyCode === ENTER_KEY) addTodo(e.target.value);
 });
 eventRegistry.subscribe("new_todo_input", e => app.setState({ input: e.target.value }));
-eventRegistry.subscribe("new_todo_blur", e => addTodo(e.target.value));
+eventRegistry.subscribe("new_todo_blur", e => app.setState({ input: e.target.value }));
 eventRegistry.subscribe("toggle_all", () => {
   const { todos, filter } = app.state;
   const visibleTodos = todos.filter(todo => {
@@ -59,13 +59,6 @@ eventRegistry.subscribe("todo_destroy", e => {
 eventRegistry.subscribe("todo_dblclick", e => {
   const id = Number(e.target.dataset.id);
   app.setState({ editingId: id, editText: e.target.textContent });
-  setTimeout(() => {
-    const inputEl = document.querySelector(".edit");
-    if (inputEl) {
-      inputEl.focus();
-      inputEl.setSelectionRange(inputEl.value.length, inputEl.value.length);
-    }
-  }, 0);
 });
 eventRegistry.subscribe("todo_edit_input", e => app.setState({ editText: e.target.value }));
 eventRegistry.subscribe("todo_edit_blur", e => {
