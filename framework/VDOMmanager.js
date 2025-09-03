@@ -44,9 +44,9 @@ function updateElement(parent, newVNode, oldVNode, index = 0) {
   updateAttributes(existingEl, newVNode.attrs, oldVNode.attrs);
   const newChildren = newVNode.children || [];
   const oldChildren = oldVNode.children || [];
-  reconcileKeyedChildren(existingEl, newChildren, oldChildren);
+  updateElements(existingEl, newChildren, oldChildren);
 }
-function reconcileKeyedChildren(parentEl, newChildren, oldChildren) {
+function updateElements(parentEl, newChildren, oldChildren) {
   const hasKeys =
     newChildren.some(c => c?.attrs?.key != null) ||
     oldChildren.some(c => c?.attrs?.key != null);
@@ -91,7 +91,7 @@ function reconcileKeyedChildren(parentEl, newChildren, oldChildren) {
       const oldVNode = oldKeyToVNode.get(key);
 
       updateAttributes(el, newChild.attrs, oldVNode.attrs);
-      reconcileKeyedChildren(el, newChild.children || [], oldVNode.children || []);
+      updateElements(el, newChild.children || [], oldVNode.children || []);
 
       newElements[idx] = el;
       usedKeys.add(key);

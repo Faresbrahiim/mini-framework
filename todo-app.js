@@ -68,7 +68,7 @@ eventRegistry.subscribe("todo_edit_keydown", e => {
   const id = Number(e.target.dataset.id);
   if (e.keyCode === ENTER_KEY) {
     const trimmed = e.target.value.trim();
-    if (trimmed.length > 2) {
+    if (trimmed.length >= 2) {
       updateTodo(id, t => ({ ...t, title: trimmed }));
     }
     app.setState({ editingId: null, editText: "" });
