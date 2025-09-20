@@ -12,7 +12,7 @@ const initialState = {
   editingId: null,
   editText: "",
 };
-
+// done
 const addTodo = value => {
   const trimmed = value.trim();
   if (!trimmed || trimmed.length <= 1) return;
